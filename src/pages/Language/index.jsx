@@ -23,6 +23,7 @@ class App extends React.Component {
     this.handleTextareaChange = this.handleTextareaChange.bind(this);
     this.handleSave = this.handleSave.bind(this);
     this.handleCreateClick = this.handleCreateClick.bind(this);
+    this.handleNewClick = this.handleNewClick.bind(this);
   }
 
   handleInputChange(tag, e) {
@@ -109,6 +110,11 @@ class App extends React.Component {
     });
   }
 
+  handleNewClick() {
+    localStorage.clear();
+    this.setState({ ...this.state, language: [...langModel] })
+  }
+
   render() {
     const { language, uploadData } = this.state;
 
@@ -116,6 +122,7 @@ class App extends React.Component {
       <Container id="container" className="container">
         <Title>Translation Generator</Title>
         <div className="btn-group">
+          <button type="button" className="btn btn-xs btn-info" onClick={() => this.handleNewClick()}>New</button>
           <button type="button" className="btn btn-xs btn-success" onClick={() => this.handleSave()}>Save</button>
           <button type="button" className="btn btn-xs btn-primary" onClick={() => this.handleAddTag()}>Add tag</button>
           <div className="dropdown" style={{ display: "none" }} id="files_download">
