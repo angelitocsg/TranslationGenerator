@@ -22,6 +22,7 @@ class App extends React.Component {
     this.handleUpload = this.handleUpload.bind(this);
     this.handleTextareaChange = this.handleTextareaChange.bind(this);
     this.handleSave = this.handleSave.bind(this);
+    this.handleCreateClick = this.handleCreateClick.bind(this);
   }
 
   handleInputChange(tag, e) {
@@ -66,13 +67,13 @@ class App extends React.Component {
     var pt_csharp = `${language.reduce((p, c) => (`${p}${c.tag}\t${c.pt}\t${c.grp}\n`), "")}`;
     var en_csharp = `${language.reduce((p, c) => (`${p}${c.tag}\t${c.en}\t${c.grp}\n`), "")}`;
     var es_csharp = `${language.reduce((p, c) => (`${p}${c.tag}\t${c.es}\t${c.grp}\n`), "")}`;
-    
+
     document.getElementById('download_default').href = 'data:' + getData(JSON.stringify(language));
-    
+
     document.getElementById('download_pt').href = 'data:' + getData(pt);
     document.getElementById('download_en').href = 'data:' + getData(en);
     document.getElementById('download_es').href = 'data:' + getData(es);
-    
+
     document.getElementById('download_pt_csharp').href = 'data:' + getData(pt_csharp);
     document.getElementById('download_en_csharp').href = 'data:' + getData(en_csharp);
     document.getElementById('download_es_csharp').href = 'data:' + getData(es_csharp);
@@ -95,6 +96,19 @@ class App extends React.Component {
     });
   }
 
+  handleCreateClick(line) {
+    if (line.en === "" || line.en === undefined) { return; }
+    var tag = window.prepareWords(line.en.split(" "));
+    this.setState({
+      ...this.state,
+      language: [
+        ...this.state.language.map(l => {
+          return l.id === line.id ? { ...l, tag } : l
+        })
+      ]
+    });
+  }
+
   render() {
     const { language, uploadData } = this.state;
 
@@ -113,13 +127,13 @@ class App extends React.Component {
               <a href="#/" id="download_default" className="dropdown-item" download="default.json">Default</a>
               <div className="dropdown-divider"></div>
               <h6 className="dropdown-header">Javascript</h6>
-              <a href="#/" id="download_pt" className="dropdown-item" download="pt-BR.js">Português</a>
               <a href="#/" id="download_en" className="dropdown-item" download="en-US.js">English</a>
+              <a href="#/" id="download_pt" className="dropdown-item" download="pt-BR.js">Português</a>
               <a href="#/" id="download_es" className="dropdown-item" download="es-ES.js">Español</a>
               <div className="dropdown-divider"></div>
               <h6 className="dropdown-header">C#</h6>
-              <a href="#/" id="download_pt_csharp" className="dropdown-item" download="pt-BR(csharp).txt">Português</a>
               <a href="#/" id="download_en_csharp" className="dropdown-item" download="en-US(csharp).txt">English</a>
+              <a href="#/" id="download_pt_csharp" className="dropdown-item" download="pt-BR(csharp).txt">Português</a>
               <a href="#/" id="download_es_csharp" className="dropdown-item" download="es-ES(csharp).txt">Español</a>
             </div>
           </div>
@@ -137,25 +151,70 @@ class App extends React.Component {
           <Header className="col">Español</Header>
         </Line>
 
-        {language.map(l => (
-          <Line className="row col lang-line" key={l.id}>
-            <div className="col">
-              <input type="text" value={l.tag} onChange={(e) => this.handleInputChange(l.tag, e)} name="tag" className="form-control" autoComplete="false" autoCorrect="false" placeholder="Tag" />
-            </div>
-            <div className="col">
-              <input type="text" value={l.grp} onChange={(e) => this.handleInputChange(l.tag, e)} name="grp" className="form-control" autoComplete="false" autoCorrect="false" placeholder="Group" />
-            </div>
-            <div className="col">
-              <input type="text" value={l.en} onChange={(e) => this.handleInputChange(l.tag, e)} name="en" className="form-control" autoComplete="false" autoCorrect="false" placeholder="English" />
-            </div>
-            <div className="col">
-              <input type="text" value={l.pt} onChange={(e) => this.handleInputChange(l.tag, e)} name="pt" className="form-control" autoComplete="false" autoCorrect="false" placeholder="Português" />
-            </div>
-            <div className="col">
-              <input type="text" value={l.es} onChange={(e) => this.handleInputChange(l.tag, e)} name="es" className="form-control" autoComplete="false" autoCorrect="false" placeholder="Español" />
-            </div>
-          </Line>
-        ))}
+        <form className="was-validated lang-form">
+          {language.map(l => (
+            <Line className="row col lang-line" key={l.id}>
+              <div className="col">
+                <div className="btn-group" style={{ width: "100%", height: "25px" }}>
+                  <input type="text"
+                    value={l.tag}
+                    onChange={(e) => this.handleInputChange(l.tag, e)}
+                    name="tag"
+                    required="required"
+                    className="form-control"
+                    autoComplete="false"
+                    autoCorrect="false"
+                    placeholder="Tag" />
+                  <button onClick={() => this.handleCreateClick(l)} className="btn btn-sm btn-secondary" style={{ borderRadius: 0 }}>New</button>
+                </div>
+              </div>
+              <div className="col">
+                <input type="text"
+                  value={l.grp}
+                  onChange={(e) => this.handleInputChange(l.tag, e)}
+                  name="grp"
+                  required="required"
+                  className="form-control"
+                  autoComplete="false"
+                  autoCorrect="false"
+                  placeholder="Group" />
+              </div>
+              <div className="col">
+                <input type="text"
+                  value={l.en}
+                  onChange={(e) => this.handleInputChange(l.tag, e)}
+                  name="en"
+                  required="required"
+                  className="form-control"
+                  autoComplete="false"
+                  autoCorrect="false"
+                  placeholder="English" />
+              </div>
+              <div className="col">
+                <input type="text"
+                  value={l.pt}
+                  onChange={(e) => this.handleInputChange(l.tag, e)}
+                  name="pt"
+                  required="required"
+                  className="form-control"
+                  autoComplete="false"
+                  autoCorrect="false"
+                  placeholder="Português" />
+              </div>
+              <div className="col">
+                <input type="text"
+                  value={l.es}
+                  onChange={(e) => this.handleInputChange(l.tag, e)}
+                  name="es"
+                  required="required"
+                  className="form-control"
+                  autoComplete="false"
+                  autoCorrect="false"
+                  placeholder="Español" />
+              </div>
+            </Line>
+          ))}
+        </form>
 
         <div className="modal fade" id="modalUpload" tabIndex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
           <div className="modal-dialog" role="document">
