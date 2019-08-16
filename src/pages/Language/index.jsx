@@ -172,7 +172,7 @@ class App extends React.Component {
                     autoComplete="false"
                     autoCorrect="false"
                     placeholder="Tag" />
-                  <button onClick={() => this.handleCreateClick(l)} className="btn btn-sm btn-secondary" style={{ borderRadius: 0 }}>New</button>
+                  <button type="button" onClick={() => this.handleCreateClick(l)} className="btn btn-sm btn-secondary" style={{ borderRadius: 0 }}>New</button>
                 </div>
               </div>
               <div className="col">
