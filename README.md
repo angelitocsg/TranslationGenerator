@@ -1,2 +1,2 @@
 # translation-generator
-Generate translations dictionary files for C# and React resources
+Generate translations dictionary files for C# and Javascript resources

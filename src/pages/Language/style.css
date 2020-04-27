@@ -1,0 +1,10 @@
+.col { 
+    padding-top: 1px !important;
+    padding-bottom: 0px !important;
+}
+
+.btn-line {
+    border-radius: 0;
+    border: 0;
+    height: 26px;
+}
