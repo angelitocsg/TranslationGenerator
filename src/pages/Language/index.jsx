@@ -1,6 +1,7 @@
 import React from 'react';
 import { Container, Title, Line, Header } from './styles.js';
 import { lang as langModel } from './model';
+import './style.css';
 
 const getData = (text) => {
   return "text/json;charset=utf-8," + encodeURIComponent(text);
@@ -13,6 +14,7 @@ class App extends React.Component {
     super(props);
 
     this.state = {
+      lastGroup: "",
       uploadData: "",
       language: [...langModel.sort((a, b) => (a.grp + a.tag < b.grp + b.tag ? -1 : 1))]
     }
@@ -26,12 +28,17 @@ class App extends React.Component {
     this.handleNewClick = this.handleNewClick.bind(this);
   }
 
-  handleInputChange(tag, e) {
+  handleInputChange(id, e) {
+    let lastGroup = this.state.lastGroup;
+    if (e.target.name === 'grp' && e.target.value.length > 2) {
+      lastGroup = e.target.value;
+    }
     this.setState({
       ...this.state,
+      lastGroup,
       language: [
         ...this.state.language.map(l => {
-          return l.tag === tag ? { ...l, [e.target.name]: e.target.value } : l
+          return l.id === id ? { ...l, [e.target.name]: e.target.value } : l
         })
       ]
     });
@@ -46,10 +53,10 @@ class App extends React.Component {
         {
           "id": id,
           "tag": "new_" + id,
-          "grp": "",
+          "grp": this.state.lastGroup,
           "pt": "",
           "en": "",
-          "es": "",
+          "es": "-",
         }
       ]
     })
@@ -82,6 +89,12 @@ class App extends React.Component {
     localStorage.setItem('lang', JSON.stringify(this.state.language));
   }
 
+  handlePackJS = () => {
+    document.getElementById('download_default').click();
+    document.getElementById('download_pt').click();
+    document.getElementById('download_en').click();
+  }
+
   handleUpload() {
     this.setState({
       ...this.state,
@@ -111,8 +124,10 @@ class App extends React.Component {
   }
 
   handleNewClick() {
-    localStorage.clear();
-    this.setState({ ...this.state, language: [...langModel] })
+    if (window.confirm('Apagar tudo e criar um novo arquivos de tags?')) {
+      localStorage.clear();
+      this.setState({ ...this.state, language: [...langModel] })
+    }
   }
 
   render() {
@@ -122,9 +137,12 @@ class App extends React.Component {
       <Container id="container" className="container">
         <Title>Translation Generator</Title>
         <div className="btn-group">
-          <button type="button" className="btn btn-xs btn-info" onClick={() => this.handleNewClick()}>New</button>
-          <button type="button" className="btn btn-xs btn-success" onClick={() => this.handleSave()}>Save</button>
-          <button type="button" className="btn btn-xs btn-primary" onClick={() => this.handleAddTag()}>Add tag</button>
+          <button type="button" className="btn btn-xs btn-success" onClick={() => this.handleSave()} accessKey='s'>
+            Save
+          </button>
+          <button type="button" className="btn btn-xs btn-primary" onClick={() => this.handleAddTag()} accessKey='a'>
+            Add tag
+          </button>
           <div className="dropdown" style={{ display: "none" }} id="files_download">
             <button style={{ borderRadius: 0 }}
               className="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton"
@@ -134,6 +152,9 @@ class App extends React.Component {
               <a href="#/" id="download_default" className="dropdown-item" download="default.json">Default</a>
               <div className="dropdown-divider"></div>
               <h6 className="dropdown-header">Javascript</h6>
+              <a href="#/" id="download_es" className="dropdown-item" onClick={this.handlePackJS} accessKey='j'>
+                Pack JS
+              </a>
               <a href="#/" id="download_en" className="dropdown-item" download="en-US.js">English</a>
               <a href="#/" id="download_pt" className="dropdown-item" download="pt-BR.js">Português</a>
               <a href="#/" id="download_es" className="dropdown-item" download="es-ES.js">Español</a>
@@ -146,6 +167,7 @@ class App extends React.Component {
           </div>
           <a href="#/" id="download" className="btn btn-xs btn-info" style={{ display: "none" }} download="language.json">Download</a>
           <button type="button" className="btn btn-xs btn-primary" data-toggle="modal" data-target="#modalUpload">Upload</button>
+          <button type="button" className="btn btn-xs btn-info" onClick={() => this.handleNewClick()}>New</button>
         </div>
         <br />
         <br />
@@ -162,62 +184,74 @@ class App extends React.Component {
           {language.map(l => (
             <Line className="row col lang-line" key={l.id}>
               <div className="col">
-                <div className="btn-group" style={{ width: "100%", height: "25px" }}>
+                <div className="btn-group" style={{ width: "100%" }}>
+                  <button type="button" onClick={() => this.handleCreateClick(l)} className="btn btn-line btn-sm btn-secondary">New</button>
                   <input type="text"
                     value={l.tag}
-                    onChange={(e) => this.handleInputChange(l.tag, e)}
+                    onChange={(e) => this.handleInputChange(l.id, e)}
                     name="tag"
                     required="required"
                     className="form-control"
                     autoComplete="false"
                     autoCorrect="false"
-                    placeholder="Tag" />
-                  <button type="button" onClick={() => this.handleCreateClick(l)} className="btn btn-sm btn-secondary" style={{ borderRadius: 0 }}>New</button>
+                    placeholder="Tag"
+
+                    data-toggle="tooltip"
+                    data-placement="top"
+                    title={`${l.id}: ${l.tag}`}
+                  />
                 </div>
               </div>
               <div className="col">
-                <input type="text"
+                <select
                   value={l.grp}
-                  onChange={(e) => this.handleInputChange(l.tag, e)}
+                  onChange={(e) => this.handleInputChange(l.id, e)}
                   name="grp"
                   required="required"
                   className="form-control"
-                  autoComplete="false"
-                  autoCorrect="false"
-                  placeholder="Group" />
+                  style={{ marginTop: 0.5, height: 26 }}
+                >
+                  <option value="Buttons">Buttons</option>
+                  <option value="Messages">Messages</option>
+                  <option value="Texts">Texts</option>
+                </select>
               </div>
               <div className="col">
                 <input type="text"
                   value={l.en}
-                  onChange={(e) => this.handleInputChange(l.tag, e)}
+                  onChange={(e) => this.handleInputChange(l.id, e)}
                   name="en"
                   required="required"
                   className="form-control"
                   autoComplete="false"
                   autoCorrect="false"
-                  placeholder="English" />
+                  placeholder="English"
+                  style={{ marginTop: 0.5 }}
+                />
               </div>
               <div className="col">
                 <input type="text"
                   value={l.pt}
-                  onChange={(e) => this.handleInputChange(l.tag, e)}
+                  onChange={(e) => this.handleInputChange(l.id, e)}
                   name="pt"
                   required="required"
                   className="form-control"
                   autoComplete="false"
                   autoCorrect="false"
-                  placeholder="Português" />
+                  placeholder="Português"
+                  style={{ marginTop: 0.5 }} />
               </div>
               <div className="col">
                 <input type="text"
                   value={l.es}
-                  onChange={(e) => this.handleInputChange(l.tag, e)}
+                  onChange={(e) => this.handleInputChange(l.id, e)}
                   name="es"
                   required="required"
                   className="form-control"
                   autoComplete="false"
                   autoCorrect="false"
-                  placeholder="Español" />
+                  placeholder="Español"
+                  style={{ marginTop: 0.5 }} />
               </div>
             </Line>
           ))}

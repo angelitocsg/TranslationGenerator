@@ -8,4 +8,5 @@ export const Line = styled.div`
 `;
 export const Header = styled.div`
   background: #333;
+  padding: 5px !important;
 `;
