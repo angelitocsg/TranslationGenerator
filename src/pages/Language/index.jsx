@@ -1,288 +1,131 @@
-import React from 'react';
-import { Container, Title, Line, Header } from './styles.js';
-import { lang as langModel } from './model';
-import './style.css';
+import React, { useState } from 'react';
 
-const getData = (text) => {
-  return "text/json;charset=utf-8," + encodeURIComponent(text);
-}
+import Footer from '../../components/Footer';
+import ImportForm from '../../components/ImportForm';
+import NavHeader from '../../components/NavHeader';
+import Table from '../../components/Table';
+import { Translate } from '../../storage/TranslateStorage';
 
-const getNewId = () => (Math.floor(Math.random() * 10000));
+const Language = () => {
+  const [content, setContent] = useState(Translate.GetContent());
+  const [files, setFiles] = useState(Translate.GetFiles());
+  const [hasChanges, setHasChanges] = useState(false);
+  const [contentToImport, setContentToImport] = useState('');
 
-class App extends React.Component {
-  constructor(props) {
-    super(props);
+  const hideImportModal = () => {
+    var myModalEl = document.getElementById('importModal');
+    var modal = window.bootstrap.Modal.getInstance(myModalEl);
+    modal.hide();
+  };
 
-    this.state = {
-      lastGroup: "",
-      uploadData: "",
-      language: [...langModel.sort((a, b) => (a.grp + a.tag < b.grp + b.tag ? -1 : 1))]
-    }
+  const handleNewClick = () => {
+    Translate.NewTable();
+    setContent(Translate.GetContent());
+    setFiles(Translate.GetFiles());
+  };
 
-    this.handleInputChange = this.handleInputChange.bind(this);
-    this.handleAddTag = this.handleAddTag.bind(this);
-    this.handleUpload = this.handleUpload.bind(this);
-    this.handleTextareaChange = this.handleTextareaChange.bind(this);
-    this.handleSave = this.handleSave.bind(this);
-    this.handleCreateClick = this.handleCreateClick.bind(this);
-    this.handleNewClick = this.handleNewClick.bind(this);
-  }
+  const handleImportClick = () => {
+    if (contentToImport === '') return;
+    Translate.ImportTable(contentToImport);
+    handleSaveClick();
+    hideImportModal();
+    setContentToImport('');
+  };
 
-  handleInputChange(id, e) {
-    let lastGroup = this.state.lastGroup;
-    if (e.target.name === 'grp' && e.target.value.length > 2) {
-      lastGroup = e.target.value;
-    }
-    this.setState({
-      ...this.state,
-      lastGroup,
-      language: [
-        ...this.state.language.map(l => {
-          return l.id === id ? { ...l, [e.target.name]: e.target.value } : l
-        })
-      ]
-    });
-  }
+  const handleImportContentChange = (e) => {
+    var content = e.target.value;
+    setContentToImport(content);
+  };
 
-  handleAddTag() {
-    var id = getNewId();
-    this.setState({
-      ...this.state,
-      language: [
-        ...this.state.language,
-        {
-          "id": id,
-          "tag": "new_" + id,
-          "grp": this.state.lastGroup,
-          "pt": "",
-          "en": "",
-          "es": "-",
-        }
-      ]
-    })
-  }
+  const handleSaveClick = () => {
+    Translate.SaveTable();
+    setContent(Translate.GetContent());
+    setFiles(Translate.GetFiles());
+    setHasChanges(false);
+  };
 
-  handleSave = () => {
-    var obj_files_download = document.getElementById('files_download');
-    obj_files_download.style.display = "inherit";
+  const handleFieldChange = (e, id) => {
+    var field = e.target.name;
+    var value = e.target.value;
+    Translate.UpdateLine(id, field, value);
+    setContent(Translate.GetContent());
+  };
 
-    var language = this.state.language.sort((a, b) => (a.grp + a.tag < b.grp + b.tag ? -1 : 1));
-
-    var pt = `const locale = ${JSON.stringify(language.reduce((p, c) => ({ ...p, [c.tag]: c.pt }), {}), null, 2)}; \nexport default locale;`;
-    var en = `const locale = ${JSON.stringify(language.reduce((p, c) => ({ ...p, [c.tag]: c.en }), {}), null, 2)}; \nexport default locale;`;
-    var es = `const locale = ${JSON.stringify(language.reduce((p, c) => ({ ...p, [c.tag]: c.es }), {}), null, 2)}; \nexport default locale;`;
-
-    var pt_csharp = `${language.reduce((p, c) => (`${p}${c.tag}\t${c.pt}\t${c.grp}\n`), "")}`;
-    var en_csharp = `${language.reduce((p, c) => (`${p}${c.tag}\t${c.en}\t${c.grp}\n`), "")}`;
-    var es_csharp = `${language.reduce((p, c) => (`${p}${c.tag}\t${c.es}\t${c.grp}\n`), "")}`;
-
-    document.getElementById('download_default').href = 'data:' + getData(JSON.stringify(language));
-
-    document.getElementById('download_pt').href = 'data:' + getData(pt);
-    document.getElementById('download_en').href = 'data:' + getData(en);
-    document.getElementById('download_es').href = 'data:' + getData(es);
-
-    document.getElementById('download_pt_csharp').href = 'data:' + getData(pt_csharp);
-    document.getElementById('download_en_csharp').href = 'data:' + getData(en_csharp);
-    document.getElementById('download_es_csharp').href = 'data:' + getData(es_csharp);
-
-    localStorage.setItem('lang', JSON.stringify(this.state.language));
-  }
-
-  handlePackJS = () => {
+  const handlePackJSClick = () => {
     document.getElementById('download_default').click();
-    document.getElementById('download_pt').click();
-    document.getElementById('download_en').click();
-  }
+    var languages = Translate.GetLanguages();
+    languages.forEach((lang) => document.getElementById(`download_${lang.id}`).click());
+  };
+  const handlePackCSharpClick = () => {
+    document.getElementById('download_default').click();
+    var languages = Translate.GetLanguages();
+    languages.forEach((lang) => document.getElementById(`download_${lang.id}_csharp`).click());
+  };
 
-  handleUpload() {
-    this.setState({
-      ...this.state,
-      language: JSON.parse(this.state.uploadData),
-      uploadData: "",
-    })
-  }
+  const handleAddLine = () => {
+    Translate.AddLine();
+    setContent(Translate.GetContent());
+    window.scrollTo(0, document.body.scrollHeight);
+    StateChanged();
+  };
 
-  handleTextareaChange(e) {
-    this.setState({
-      ...this.state,
-      uploadData: e.target.value
-    });
-  }
+  const handleCreate = (item) => {
+    var tag = window.prepareWords(item.en.split(' '));
+    Translate.UpdateLine(item.id, 'tag', tag);
+    setContent(Translate.GetContent());
+    StateChanged();
+  };
 
-  handleCreateClick(line) {
-    if (line.en === "" || line.en === undefined) { return; }
-    var tag = window.prepareWords(line.en.split(" "));
-    this.setState({
-      ...this.state,
-      language: [
-        ...this.state.language.map(l => {
-          return l.id === line.id ? { ...l, tag } : l
-        })
-      ]
-    });
-  }
+  const handleDelete = (id) => {
+    Translate.DeleteLine(id);
+    setContent(Translate.GetContent());
+    StateChanged();
+  };
 
-  handleNewClick() {
-    if (window.confirm('Apagar tudo e criar um novo arquivos de tags?')) {
-      localStorage.clear();
-      this.setState({ ...this.state, language: [...langModel] })
-    }
-  }
+  const handleFormChange = () => {
+    StateChanged();
+  };
 
-  render() {
-    const { language, uploadData } = this.state;
+  const StateChanged = () => {
+    Translate.ClearFiles();
+    setFiles(Translate.GetFiles());
+    setHasChanges(true);
+  };
 
-    return (
-      <Container id="container" className="container">
-        <Title>Translation Generator</Title>
-        <div className="btn-group">
-          <button type="button" className="btn btn-xs btn-success" onClick={() => this.handleSave()} accessKey='s'>
-            Save
-          </button>
-          <button type="button" className="btn btn-xs btn-primary" onClick={() => this.handleAddTag()} accessKey='a'>
-            Add tag
-          </button>
-          <div className="dropdown" style={{ display: "none" }} id="files_download">
-            <button style={{ borderRadius: 0 }}
-              className="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton"
-              data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Downloads</button>
-            <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <a href="#/" id="download_default" className="dropdown-item" download="default.json">Default</a>
-              <div className="dropdown-divider"></div>
-              <h6 className="dropdown-header">Javascript</h6>
-              <a href="#/" id="download_es" className="dropdown-item" onClick={this.handlePackJS} accessKey='j'>
-                Pack JS
-              </a>
-              <a href="#/" id="download_en" className="dropdown-item" download="en-US.js">English</a>
-              <a href="#/" id="download_pt" className="dropdown-item" download="pt-BR.js">Português</a>
-              <a href="#/" id="download_es" className="dropdown-item" download="es-ES.js">Español</a>
-              <div className="dropdown-divider"></div>
-              <h6 className="dropdown-header">C#</h6>
-              <a href="#/" id="download_en_csharp" className="dropdown-item" download="en-US(csharp).txt">English</a>
-              <a href="#/" id="download_pt_csharp" className="dropdown-item" download="pt-BR(csharp).txt">Português</a>
-              <a href="#/" id="download_es_csharp" className="dropdown-item" download="es-ES(csharp).txt">Español</a>
-            </div>
-          </div>
-          <a href="#/" id="download" className="btn btn-xs btn-info" style={{ display: "none" }} download="language.json">Download</a>
-          <button type="button" className="btn btn-xs btn-primary" data-toggle="modal" data-target="#modalUpload">Upload</button>
-          <button type="button" className="btn btn-xs btn-info" onClick={() => this.handleNewClick()}>New</button>
+  return (
+    <>
+      <NavHeader
+        files={files}
+        hasChanges={hasChanges}
+        onNewClick={handleNewClick}
+        onImportClick={handleImportClick}
+        onSaveClick={handleSaveClick}
+        onPackJSClick={handlePackJSClick}
+        onPackCSharpClick={handlePackCSharpClick}></NavHeader>
+      <main className="flex-shrink-0">
+        <div className="container">
+          <Table
+            content={content}
+            onChange={handleFieldChange}
+            onCreateClick={handleCreate}
+            onDeleteClick={handleDelete}
+            onFormChange={handleFormChange}></Table>
+          <br />
+          <br />
+          <br />
+          <br />
         </div>
-        <br />
-        <br />
+      </main>
+      <ImportForm
+        contentToImport={contentToImport}
+        onImportContentChange={handleImportContentChange}
+        onImportClick={handleImportClick}></ImportForm>
+      <Footer
+        hasChanges={hasChanges}
+        onAddLineClick={handleAddLine}
+        onSaveClick={handleSaveClick}></Footer>
+    </>
+  );
+};
 
-        <Line className="row col lang-line">
-          <Header className="col">Tag</Header>
-          <Header className="col">Group</Header>
-          <Header className="col">English</Header>
-          <Header className="col">Português</Header>
-          <Header className="col">Español</Header>
-        </Line>
-
-        <form className="was-validated lang-form">
-          {language.map(l => (
-            <Line className="row col lang-line" key={l.id}>
-              <div className="col">
-                <div className="btn-group" style={{ width: "100%" }}>
-                  <button type="button" onClick={() => this.handleCreateClick(l)} className="btn btn-line btn-sm btn-secondary">New</button>
-                  <input type="text"
-                    value={l.tag}
-                    onChange={(e) => this.handleInputChange(l.id, e)}
-                    name="tag"
-                    required="required"
-                    className="form-control"
-                    autoComplete="false"
-                    autoCorrect="false"
-                    placeholder="Tag"
-
-                    data-toggle="tooltip"
-                    data-placement="top"
-                    title={`${l.id}: ${l.tag}`}
-                  />
-                </div>
-              </div>
-              <div className="col">
-                <select
-                  value={l.grp}
-                  onChange={(e) => this.handleInputChange(l.id, e)}
-                  name="grp"
-                  required="required"
-                  className="form-control"
-                  style={{ marginTop: 0.5, height: 26 }}
-                >
-                  <option value="Buttons">Buttons</option>
-                  <option value="Messages">Messages</option>
-                  <option value="Texts">Texts</option>
-                </select>
-              </div>
-              <div className="col">
-                <input type="text"
-                  value={l.en}
-                  onChange={(e) => this.handleInputChange(l.id, e)}
-                  name="en"
-                  required="required"
-                  className="form-control"
-                  autoComplete="false"
-                  autoCorrect="false"
-                  placeholder="English"
-                  style={{ marginTop: 0.5 }}
-                />
-              </div>
-              <div className="col">
-                <input type="text"
-                  value={l.pt}
-                  onChange={(e) => this.handleInputChange(l.id, e)}
-                  name="pt"
-                  required="required"
-                  className="form-control"
-                  autoComplete="false"
-                  autoCorrect="false"
-                  placeholder="Português"
-                  style={{ marginTop: 0.5 }} />
-              </div>
-              <div className="col">
-                <input type="text"
-                  value={l.es}
-                  onChange={(e) => this.handleInputChange(l.id, e)}
-                  name="es"
-                  required="required"
-                  className="form-control"
-                  autoComplete="false"
-                  autoCorrect="false"
-                  placeholder="Español"
-                  style={{ marginTop: 0.5 }} />
-              </div>
-            </Line>
-          ))}
-        </form>
-
-        <div className="modal fade" id="modalUpload" tabIndex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-          <div className="modal-dialog" role="document">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title" id="exampleModalLabel">Upload language file</h5>
-                <button type="button" className="close" data-dismiss="modal" aria-label="Fechar">
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div className="modal-body">
-                <textarea rows="10" className="form-control"
-                  onChange={this.handleTextareaChange}
-                  value={uploadData}
-                  placeholder='[{"tag":"Enter","grp":"Buttons","en":"Enter","pt":"Entrar","es":"Entrar"}]'
-                ></textarea>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                <button type="button" className="btn btn-primary" data-dismiss="modal" onClick={() => this.handleUpload()}>Upload</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </Container>
-    );
-  }
-}
-export default App;
+export default Language;
