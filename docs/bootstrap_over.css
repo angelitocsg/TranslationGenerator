@@ -1,0 +1,16 @@
+:root {
+  --bs-dark: #2e2d40;
+}
+
+main > .container {
+  padding: 60px 15px 0;
+}
+
+.bg-dark {
+  background-color: var(--bs-dark) !important;
+}
+
+.btn-dark {
+  background-color: var(--bs-dark);
+  border-color: var(--bs-dark);
+}
