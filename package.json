@@ -1,7 +1,7 @@
 {
   "name": "translation-generator",
   "homepage": ".",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
     "react": "^17.0.1",
