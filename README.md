@@ -17,7 +17,8 @@ Generate translations files for C# and Javascript resources.
 ## Frameworks
 
 * Bootstrap v5
-* React v17
+* React 17.0+
+* Styled Components 5.3+
 
 ## Screenshot
 
